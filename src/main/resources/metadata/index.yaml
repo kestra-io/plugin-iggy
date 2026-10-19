@@ -1,8 +1,8 @@
 group: io.kestra.plugin.iggy
 name: "iggy"
 title: "Apache Iggy"
-description: "Apache Iggy plugin for Kestra"
-body: ""
+description: "Tasks that publish, consume, and trigger on Apache Iggy streaming platform."
+body: "Connect to Apache Iggy streams and topics via TCP or HTTP to produce and consume messages, track consumer offsets, and trigger workflows on streaming events."
 videos: []
 createdBy: "Kestra Core Team"
 managedBy: "Kestra Core Team"

@@ -1,0 +1,19 @@
+id: iggy-listen
+namespace: io.kestra.tests
+
+triggers:
+  - id: watch
+    type: io.kestra.plugin.iggy.Trigger
+    host: localhost
+    port: 8090
+    username: iggy
+    password: iggy
+    stream: test-stream
+    topic: test-topic
+    consumerId: "1"
+    maxRecords: 10
+
+tasks:
+  - id: end
+    type: io.kestra.plugin.core.debug.Return
+    format: "{{task.id}} > {{taskrun.startDate}}"

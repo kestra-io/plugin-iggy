@@ -1,0 +1,18 @@
+id: iggy-realtime
+namespace: io.kestra.tests
+
+triggers:
+  - id: watch
+    type: io.kestra.plugin.iggy.RealtimeTrigger
+    host: localhost
+    port: 8090
+    username: iggy
+    password: iggy
+    stream: test-stream-realtime
+    topic: test-topic-realtime
+    consumerId: "1"
+
+tasks:
+  - id: end
+    type: io.kestra.plugin.core.debug.Return
+    format: "{{task.id}} > {{taskrun.startDate}}"

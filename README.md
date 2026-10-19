@@ -39,14 +39,19 @@
 
 ## Why
 
-- What user problem does this solve? Teams need a concrete starting point for building and validating new Kestra plugins without recreating the same project scaffolding from scratch.
-- Why would a team adopt this plugin in a workflow? It gives plugin authors a ready-made reference repo they can adapt alongside their own build, test, and publishing workflow.
-- What operational/business outcome does it enable? It shortens plugin delivery time, reduces setup mistakes, and makes internal or partner plugin development more repeatable.
+- **High-throughput streaming**: Seamlessly integrate Kestra flows with [Apache Iggy](https://iggy.apache.org/), an ultra-fast streaming platform designed for low latency and high throughput.
+- **Bi-directional event processing**: Publish events to and consume messages from Apache Iggy streams and topics with reliable offset tracking and internal storage persistence.
+- **Flexible triggering**: React to incoming messages either on a periodic polling schedule or in real-time with event-driven execution per message.
 
 ## What
 
 - Provides plugin components under `io.kestra.plugin.iggy`.
-- Includes classes such as `Example`, `Trigger`.
+- **Tasks**:
+  - `io.kestra.plugin.iggy.Produce`: Publish messages to Apache Iggy streams and topics with configurable partitioning, headers, and automatic resource provisioning.
+  - `io.kestra.plugin.iggy.Consume`: Pull messages from Apache Iggy topics with offset tracking, bounded duration/records, and storage into Kestra internal storage.
+- **Triggers**:
+  - `io.kestra.plugin.iggy.Trigger`: Polling trigger executing flows on a schedule when new messages arrive.
+  - `io.kestra.plugin.iggy.RealtimeTrigger`: Real-time streaming trigger creating an execution for every incoming message.
 
 ## Running Kestra locally with this plugin
 
