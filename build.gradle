@@ -51,7 +51,7 @@ dependencies {
     compileOnly group: "io.kestra", name: "script", version: kestraVersion
 
     // iggy
-    implementation "org.apache.iggy:iggy:0.8.0"
+    implementation "org.apache.iggy:iggy:0.9.0"
 }
 
 
