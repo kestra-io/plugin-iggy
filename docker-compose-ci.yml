@@ -1,6 +1,6 @@
 services:
   iggy:
-    image: apache/iggy:0.8.0
+    image: apache/iggy:0.10.0
     ports:
       - "8090:8090"
       - "3000:3000"

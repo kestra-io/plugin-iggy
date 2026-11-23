@@ -23,9 +23,7 @@ import org.apache.iggy.message.HeaderKey;
 import org.apache.iggy.message.HeaderValue;
 import org.apache.iggy.message.Message;
 import org.apache.iggy.message.Partitioning;
-import org.apache.iggy.topic.CompressionAlgorithm;
 
-import java.math.BigInteger;
 import java.nio.charset.StandardCharsets;
 import java.util.HashMap;
 import java.util.List;
@@ -209,7 +207,7 @@ public class Produce extends IggyConnection implements RunnableTask<Produce.Outp
             }
             try {
                 runContext.logger().info("Topic '{}' does not exist in stream '{}'; creating topic...", rTopic, rStream);
-                client.topics().createTopic(streamId, 1L, CompressionAlgorithm.None, BigInteger.ZERO, BigInteger.ZERO, Optional.empty(), rTopic);
+                client.topics().createTopic(streamId, rTopic, 1L);
             } catch (Exception e) {
                 runContext.logger().error("Failed to auto-create topic '{}' in stream '{}': {}", rTopic, rStream, e.getMessage());
                 throw new RuntimeException("Failed to create missing topic '" + rTopic + "' in stream '" + rStream + "': " + e.getMessage(), e);
