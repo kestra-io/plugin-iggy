@@ -19,6 +19,7 @@ import reactor.core.publisher.Flux;
 import java.math.BigInteger;
 import java.time.Duration;
 import java.time.Instant;
+import java.util.List;
 import java.util.Map;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
@@ -131,6 +132,57 @@ class RealtimeTriggerTest extends IggyTest {
         assertThat(result.get("payload"), is("hello realtime trigger"));
         assertThat(result.get("stream"), is("test-stream-realtime"));
         assertThat(result.get("topic"), is("test-topic-realtime"));
+    }
+
+    @Test
+    void testRealtimeTriggerWithoutPartitionIdCommitsOffsets() throws Exception {
+        assumeIggyReachable();
+        var stream = "test-stream-realtime-commit-" + System.nanoTime();
+        var topic = "test-topic-realtime-commit";
+
+        Produce.builder()
+            .host(Property.ofValue(DEFAULT_HOST))
+            .port(Property.ofValue(DEFAULT_PORT))
+            .username(Property.ofValue(DEFAULT_USERNAME))
+            .password(Property.ofValue(DEFAULT_PASSWORD))
+            .stream(Property.ofValue(stream))
+            .topic(Property.ofValue(topic))
+            .createIfMissing(Property.ofValue(true))
+            .from(List.of(Map.of("payload", "first"), Map.of("payload", "second")))
+            .build()
+            .run(runContextFactory.of());
+
+        // No partitionId: offsets must still be committed, so the first run sees each message once
+        // and a restarted trigger with the same consumer sees nothing again.
+        var firstRun = collectRealtimeMessages(stream, topic);
+        assertThat(firstRun.stream().map(RealtimeTrigger.Output::getPayload).toList(), contains("first", "second"));
+
+        var secondRun = collectRealtimeMessages(stream, topic);
+        assertThat(secondRun, empty());
+    }
+
+    private List<RealtimeTrigger.Output> collectRealtimeMessages(String stream, String topic) throws Exception {
+        RealtimeTrigger trigger = RealtimeTrigger.builder()
+            .id("realtime-commit-" + System.nanoTime())
+            .type(RealtimeTrigger.class.getName())
+            .host(Property.ofValue(DEFAULT_HOST))
+            .port(Property.ofValue(DEFAULT_PORT))
+            .username(Property.ofValue(DEFAULT_USERNAME))
+            .password(Property.ofValue(DEFAULT_PASSWORD))
+            .stream(Property.ofValue(stream))
+            .topic(Property.ofValue(topic))
+            .consumerId(Property.ofValue("42"))
+            .pollDuration(Property.ofValue(Duration.ofMillis(200)))
+            .build();
+
+        try {
+            return Flux.from(trigger.publisher(runContextFactory.of()))
+                .take(Duration.ofSeconds(5))
+                .collectList()
+                .block();
+        } finally {
+            trigger.kill();
+        }
     }
 
     @Test
