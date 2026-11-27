@@ -22,6 +22,7 @@ import org.apache.commons.lang3.math.NumberUtils;
 import org.apache.iggy.client.blocking.IggyBaseClient;
 import org.apache.iggy.consumergroup.Consumer;
 import org.apache.iggy.identifier.ConsumerId;
+import org.apache.iggy.message.Checkpoint;
 import org.apache.iggy.message.Message;
 import org.apache.iggy.message.PolledMessages;
 import org.apache.iggy.message.PollingKind;
@@ -197,26 +198,27 @@ public class RealtimeTrigger extends AbstractIggyTrigger implements RealtimeTrig
                             }
                         }
                     } else {
-                        BigInteger batchLastEmittedOffset = null;
+                        int batchLastEmittedIndex = -1;
                         try {
-                            for (Message message : messages) {
+                            for (int i = 0; i < messages.size(); i++) {
                                 if (!isActive.get() || emitter.isCancelled()) {
                                     break;
                                 }
-                                Output output = toOutput(message, rStream, rTopic, rPartitionId);
-                                emitter.next(output);
+                                Message message = messages.get(i);
+                                emitter.next(toOutput(message, rStream, rTopic, rPartitionId));
 
                                 if (message.header() != null && message.header().offset() != null) {
-                                    batchLastEmittedOffset = message.header().offset();
-                                    lastEmittedOffset = batchLastEmittedOffset;
+                                    batchLastEmittedIndex = i;
+                                    lastEmittedOffset = message.header().offset();
                                 }
                             }
                         } finally {
-                            if (rAutoCommit && batchLastEmittedOffset != null && !batchLastEmittedOffset.equals(lastStoredOffset)) {
-                                client.consumerOffsets().storeConsumerOffset(
-                                    streamId, topicId, rPartitionId, consumer, batchLastEmittedOffset
-                                );
-                                lastStoredOffset = batchLastEmittedOffset;
+                            // Commit through the poll's checkpoint so the partition the server served is always sent:
+                            // since iggy 0.10.0, storing an offset without a partition id is rejected.
+                            var checkpoint = rAutoCommit ? polled.checkpointAt(batchLastEmittedIndex) : Optional.<Checkpoint>empty();
+                            if (checkpoint.isPresent() && !checkpoint.get().offset().equals(lastStoredOffset)) {
+                                client.consumerOffsets().storeConsumerPosition(streamId, topicId, consumer, checkpoint.get());
+                                lastStoredOffset = checkpoint.get().offset();
                             }
                         }
 
